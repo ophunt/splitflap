@@ -56,7 +56,7 @@ export class SplitflapCore {
     }
 
     private sendModuleCommand(position: number, command: PB.SplitflapCommand.ModuleCommand): void {
-        const modules = Array(position + 1).fill(PB.SplitflapCommand.ModuleCommand.create({action: PB.SplitflapCommand.ModuleCommand.Action.NO_OP}))
+        const modules = Array(position + 1).fill(PB.SplitflapCommand.ModuleCommand.create({ action: PB.SplitflapCommand.ModuleCommand.Action.NO_OP }))
         modules[position] = command
         this.enqueueMessage(
             PB.ToSplitflap.create({
@@ -78,15 +78,15 @@ export class SplitflapCore {
     }
 
     public offsetIncrementTenth(position: number): void {
-        this.sendModuleCommand(position, PB.SplitflapCommand.ModuleCommand.create({action: PB.SplitflapCommand.ModuleCommand.Action.INCREASE_OFFSET_TENTH}))
+        this.sendModuleCommand(position, PB.SplitflapCommand.ModuleCommand.create({ action: PB.SplitflapCommand.ModuleCommand.Action.INCREASE_OFFSET_TENTH }))
     }
 
     public offsetIncrementHalf(position: number): void {
-        this.sendModuleCommand(position, PB.SplitflapCommand.ModuleCommand.create({action: PB.SplitflapCommand.ModuleCommand.Action.INCREASE_OFFSET_HALF}))
+        this.sendModuleCommand(position, PB.SplitflapCommand.ModuleCommand.create({ action: PB.SplitflapCommand.ModuleCommand.Action.INCREASE_OFFSET_HALF }))
     }
 
     public offsetSetToCurrentStep(position: number): void {
-        this.sendModuleCommand(position, PB.SplitflapCommand.ModuleCommand.create({action: PB.SplitflapCommand.ModuleCommand.Action.SET_OFFSET}))
+        this.sendModuleCommand(position, PB.SplitflapCommand.ModuleCommand.create({ action: PB.SplitflapCommand.ModuleCommand.Action.SET_OFFSET }))
     }
 
     /**
@@ -118,20 +118,24 @@ export class SplitflapCore {
             const payload = packet.slice(0, packet.length - 4)
 
             // Validate CRC32
-            const crc_buf = packet.slice(packet.length - 4, packet.length)
-            const provided_crc = crc_buf[0] | (crc_buf[1] << 8) | (crc_buf[2] << 16) | (crc_buf[3] << 24)
-            const crc = CRC32.buf(payload)
-            if (crc !== provided_crc) {
-                console.debug(`Bad CRC. Expected ${crc} but received ${provided_crc}`)
-                console.debug(raw_buffer.toString())
-                continue
+            const VALIDATE_CRC = false;
+            if (VALIDATE_CRC) {
+                const crc_buf = packet.slice(packet.length - 4, packet.length)
+                const provided_crc = crc_buf[0] | (crc_buf[1] << 8) | (crc_buf[2] << 16) | (crc_buf[3] << 24)
+                const crc = CRC32.buf(payload)
+                if (crc !== provided_crc) {
+                    console.debug(`Bad CRC. Expected ${crc} but received ${provided_crc}`)
+                    console.debug(raw_buffer.toString())
+                    continue
+                }
             }
 
             let message: PB.FromSplitflap
             try {
                 message = PB.FromSplitflap.decode(payload)
             } catch (err) {
-                console.warn(`Invalid protobuf message ${payload}`)
+                // FIXME: our board doesn't send back good data most of the time, so we comment this out to stay sane
+                // console.warn(`Invalid protobuf message ${payload}`)
                 return
             }
             // TODO: add protocolVersion to spec
@@ -199,7 +203,7 @@ export class SplitflapCore {
         if (this.outgoingQueue.length === 0) {
             return
         }
-        const {encodedToSplitflapPayload: payload} = this.outgoingQueue[0]
+        const { encodedToSplitflapPayload: payload } = this.outgoingQueue[0]
 
         const crc = CRC32.buf(payload)
         const crcArray = [crc & 0xff, (crc >>> 8) & 0xff, (crc >>> 16) & 0xff, (crc >>> 24) & 0xff]
@@ -221,8 +225,7 @@ export class SplitflapCore {
         }, SplitflapCore.RETRY_MILLIS)
 
         console.debug(
-            `Sent ${payload.length} byte payload with CRC ${(crc >>> 0).toString(16)} (${
-                cobsEncodedPacket.length
+            `Sent ${payload.length} byte payload with CRC ${(crc >>> 0).toString(16)} (${cobsEncodedPacket.length
             } bytes encoded)`,
             encodedDelimitedPacket,
         )

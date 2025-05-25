@@ -2,8 +2,8 @@ import SerialPort = require('serialport')
 
 import readline from 'readline'
 
-import {SplitflapNode} from 'splitflapjs-node'
-import {PB} from 'splitflapjs-proto'
+import { SplitflapNode } from 'splitflapjs-node'
+import { PB } from 'splitflapjs-proto'
 import { applySetFlaps } from 'splitflapjs-core/dist/util'
 
 // Edit this to restrict to a single device based on serial number, e.g. add something like '02280A9E' to this array.
@@ -62,10 +62,10 @@ const main = async (): Promise<void> => {
         return USB_SERIAL_NUMBERS.length > 0
             ? portInfo.serialNumber !== undefined && USB_SERIAL_NUMBERS.includes(portInfo.serialNumber)
             : SplitflapNode.USB_DEVICE_FILTERS.some(
-                  (f) =>
-                      f.usbVendorId.toString(16) === portInfo.vendorId &&
-                      f.usbProductId.toString(16) === portInfo.productId,
-              )
+                (f) =>
+                    f.usbVendorId.toString(16).toLowerCase() === portInfo.vendorId?.toLowerCase() &&
+                    f.usbProductId.toString(16).toLowerCase() === portInfo.productId?.toLowerCase(),
+            )
     })
 
     if (matchingPorts.length < 1) {
@@ -117,7 +117,7 @@ const main = async (): Promise<void> => {
             } else if (message.payload === 'supervisorState' && message.supervisorState) {
                 console.log(
                     `Supervisor state:\n${JSON.stringify(
-                        PB.SupervisorState.toObject(message.supervisorState as PB.SupervisorState, {defaults: true}),
+                        PB.SupervisorState.toObject(message.supervisorState as PB.SupervisorState, { defaults: true }),
                         undefined,
                         4,
                     )}`,
@@ -126,33 +126,55 @@ const main = async (): Promise<void> => {
         },
     )
 
-    const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
+    // const rl = readline.createInterface({
+    //     input: process.stdin,
+    //     output: process.stdout,
+    // })
+    // const reset = await new Promise<string>((resolve) => {
+    //     rl.question('Reset? y/n', resolve)
+    // })
+    await new Promise((resolve) => {
+        setTimeout(resolve, 3000);
     })
-    const reset = await new Promise<string>((resolve) => {
-        rl.question('Reset? y/n', resolve)
-    })
+    const reset = 'y';
     if (reset === 'y') {
         await splitflap.hardReset()
     }
 
     // TODO: make this wait for idle instead of just any state
-    console.log('Waiting to hear from Splitflap...')
-    await splitflapStateReceived
+    // console.log('Waiting to hear from Splitflap...')
+    // await splitflapStateReceived
+    // console.log('State received, starting animation')
 
-    type anim = [number, string]
-    const animation: anim[] = [
-        [6000, 'hello'],
-        [15000, 'world'],
-    ]
+    // type anim = [number, string]
+    // const animation: anim[] = [
+    //     [6000, 'hello'],
+    //     [15000, 'world'],
+    // ]
+    // let cur = 0
 
-    let cur = 0
+    const DEGREE_CHAR = '\''
+    enum SCALES {
+        CELCIUS = 'c',
+        FARENHEIT = 'f'
+    }
+
     const runAnimation = () => {
-        splitflapConfig = applySetFlaps(splitflapConfig, stringToFlapIndexArray(animation[cur][1]))
+        // TODO: Get weather
+        const temp = 72 + Math.floor(Math.random() * 10);
+        const scale = SCALES.FARENHEIT;
+        const weather = `${temp}${DEGREE_CHAR}${scale}`
+        // TODO: Set delay based on something
+        const delay = 15000
+
+        // Send message to flaps
+        console.log(`Sending message "${weather}" to flaps`)
+        splitflapConfig = applySetFlaps(splitflapConfig, stringToFlapIndexArray(weather))
         splitflap.sendConfig(splitflapConfig)
-        setTimeout(runAnimation, animation[cur][0])
-        cur = (cur + 1) % animation.length
+
+        // Wait to re-fetch
+        setTimeout(runAnimation, delay)
+        // cur = (cur + 1) % animation.length
     }
 
     runAnimation()
