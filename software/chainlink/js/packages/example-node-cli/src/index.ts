@@ -7,54 +7,12 @@ import { PB } from 'splitflapjs-proto'
 import { applySetFlaps } from 'splitflapjs-core/dist/util'
 import { getWeather } from './weather'
 
+import { FLAPS, DEGREE_CHAR, SCALES } from './consts'
+
 // Edit this to restrict to a single device based on serial number, e.g. add something like '02280A9E' to this array.
 // If this is left blank, a serial device matching the vendor/product codes from SplitflapNode.USB_DEVICE_FILTERS
 // will be selected.
 const USB_SERIAL_NUMBERS: Array<string> = []
-
-// Make sure this matches config.h in the splitflap firmware
-const FLAPS = [
-    ' ',
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
-    'g',
-    'h',
-    'i',
-    'j',
-    'k',
-    'l',
-    'm',
-    'n',
-    'o',
-    'p',
-    'q',
-    'r',
-    's',
-    't',
-    'u',
-    'v',
-    'w',
-    'x',
-    'y',
-    'z',
-    '0',
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-    '7',
-    '8',
-    '9',
-    '.',
-    ',',
-    "'",
-]
 
 const main = async (): Promise<void> => {
     const ports = await SerialPort.list()
@@ -154,17 +112,11 @@ const main = async (): Promise<void> => {
     // ]
     // let cur = 0
 
-    const DEGREE_CHAR = '\''
-    enum SCALES {
-        CELCIUS = 'c',
-        FAHRENHEIT = 'f'
-    }
-
+    let scale = SCALES.FAHRENHEIT;
     const runAnimation = async () => {
         // Get weather
-        const weatherData = await getWeather();
+        const weatherData = await getWeather(scale);
         const temp = weatherData.current.temperature2m.toFixed(0);
-        const scale = SCALES.FAHRENHEIT;
         const weather = `${temp}${DEGREE_CHAR}${scale}`
         // TODO: Set delay based on something
         const delay = 15000
@@ -174,9 +126,9 @@ const main = async (): Promise<void> => {
         splitflapConfig = applySetFlaps(splitflapConfig, stringToFlapIndexArray(weather))
         splitflap.sendConfig(splitflapConfig)
 
-        // Wait to re-fetch
+        // Wait to re-fetch, with opposite scale
         setTimeout(runAnimation, delay)
-        // cur = (cur + 1) % animation.length
+        scale = scale === SCALES.CELCIUS ? SCALES.FAHRENHEIT : SCALES.CELCIUS;
     }
 
     runAnimation()
