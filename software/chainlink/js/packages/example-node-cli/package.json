@@ -13,6 +13,7 @@
     "author": "",
     "license": "Apache-2.0",
     "dependencies": {
+        "openmeteo": "^1.2.0",
         "serialport": "^9.2.4",
         "splitflapjs-node": "^1.0.0"
     },

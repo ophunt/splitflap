@@ -5,6 +5,7 @@ import readline from 'readline'
 import { SplitflapNode } from 'splitflapjs-node'
 import { PB } from 'splitflapjs-proto'
 import { applySetFlaps } from 'splitflapjs-core/dist/util'
+import { getWeather } from './weather'
 
 // Edit this to restrict to a single device based on serial number, e.g. add something like '02280A9E' to this array.
 // If this is left blank, a serial device matching the vendor/product codes from SplitflapNode.USB_DEVICE_FILTERS
@@ -156,13 +157,14 @@ const main = async (): Promise<void> => {
     const DEGREE_CHAR = '\''
     enum SCALES {
         CELCIUS = 'c',
-        FARENHEIT = 'f'
+        FAHRENHEIT = 'f'
     }
 
-    const runAnimation = () => {
-        // TODO: Get weather
-        const temp = 72 + Math.floor(Math.random() * 10);
-        const scale = SCALES.FARENHEIT;
+    const runAnimation = async () => {
+        // Get weather
+        const weatherData = await getWeather();
+        const temp = weatherData.current.temperature2m.toFixed(0);
+        const scale = SCALES.FAHRENHEIT;
         const weather = `${temp}${DEGREE_CHAR}${scale}`
         // TODO: Set delay based on something
         const delay = 15000
