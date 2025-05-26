@@ -7,7 +7,8 @@ import { PB } from 'splitflapjs-proto'
 import { applySetFlaps } from 'splitflapjs-core/dist/util'
 import { getWeather } from './weather'
 
-import { FLAPS, DEGREE_CHAR, SCALES } from './consts'
+import { DEGREE_CHAR, SCALES } from './consts'
+import { sleep, stringToFlapIndexArray } from './utils'
 
 // Edit this to restrict to a single device based on serial number, e.g. add something like '02280A9E' to this array.
 // If this is left blank, a serial device matching the vendor/product codes from SplitflapNode.USB_DEVICE_FILTERS
@@ -85,32 +86,14 @@ const main = async (): Promise<void> => {
         },
     )
 
-    // const rl = readline.createInterface({
-    //     input: process.stdin,
-    //     output: process.stdout,
-    // })
-    // const reset = await new Promise<string>((resolve) => {
-    //     rl.question('Reset? y/n', resolve)
-    // })
-    await new Promise((resolve) => {
-        setTimeout(resolve, 3000);
-    })
-    const reset = 'y';
-    if (reset === 'y') {
-        await splitflap.hardReset()
-    }
+    const STARTUP_DELAY = 3000;
+    await sleep(STARTUP_DELAY);
+    await splitflap.hardReset()
 
     // TODO: make this wait for idle instead of just any state
     // console.log('Waiting to hear from Splitflap...')
     // await splitflapStateReceived
     // console.log('State received, starting animation')
-
-    // type anim = [number, string]
-    // const animation: anim[] = [
-    //     [6000, 'hello'],
-    //     [15000, 'world'],
-    // ]
-    // let cur = 0
 
     let scale = SCALES.FAHRENHEIT;
     const runAnimation = async () => {
@@ -118,8 +101,8 @@ const main = async (): Promise<void> => {
         const weatherData = await getWeather(scale);
         const temp = weatherData.current.temperature2m.toFixed(0);
         const weather = `${temp}${DEGREE_CHAR}${scale}`
-        // TODO: Set delay based on something
-        const delay = 15000
+        // Set delay to-refetch every minute
+        const delay = 60 * 1000
 
         // Send message to flaps
         console.log(`Sending message "${weather}" to flaps`)
@@ -134,17 +117,6 @@ const main = async (): Promise<void> => {
     runAnimation()
 }
 
-const charToFlapIndex = (c: string): number | null => {
-    const i = FLAPS.indexOf(c)
-    if (i >= 0) {
-        return i
-    } else {
-        return null
-    }
-}
 
-const stringToFlapIndexArray = (str: string): Array<number | null> => {
-    return str.split('').map(charToFlapIndex)
-}
 
 main()
