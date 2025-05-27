@@ -47,3 +47,8 @@ export enum SCALES {
     CELCIUS = 'c',
     FAHRENHEIT = 'f'
 }
+
+export const DEFAULT_LOCATION = {
+    "latitude": 38.88070891279823,
+    "longitude": -77.10941518314624,
+}

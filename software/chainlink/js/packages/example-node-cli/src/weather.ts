@@ -1,19 +1,14 @@
 import { fetchWeatherApi } from 'openmeteo';
-import { SCALES } from './consts';
+import { SCALES, DEFAULT_LOCATION } from './consts';
+
+let location = DEFAULT_LOCATION;
 
 export const getWeather = async (scale: SCALES) => {
-    const c_params = {
-        "latitude": 38.88070891279823,
-        "longitude": -77.10941518314624,
-        "current": "temperature_2m"
-    }
-    const f_params = {
-        "latitude": 38.88070891279823,
-        "longitude": -77.10941518314624,
+    const params = {
+        ...{ location },
         "current": "temperature_2m",
-        "temperature_unit": "fahrenheit"
+        ...(scale === SCALES.FAHRENHEIT ? { "temperature_unit": "fahrenheit" } : {})
     }
-    const params = scale === SCALES.FAHRENHEIT ? f_params : c_params
     const url = "https://api.open-meteo.com/v1/forecast";
     const responses = await fetchWeatherApi(url, params);
 
@@ -38,4 +33,9 @@ export const getWeather = async (scale: SCALES) => {
     };
 
     return weatherData;
+}
+
+export const setLocation = (locationQuery: string): void => {
+    location = DEFAULT_LOCATION;
+    // TODO: Get location via geocoding API
 }
