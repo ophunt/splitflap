@@ -114,7 +114,26 @@ const main = async (): Promise<void> => {
         scale = scale === SCALES.CELCIUS ? SCALES.FAHRENHEIT : SCALES.CELCIUS;
     }
 
-    runAnimation()
+    const runMessageForKendal = async () => {
+        const message = ['    ', 'hey', 'kro', 'hbd', 'hope', 'you ', 'have', 'a   ', 'good', 'show', 'love', 'you ', 'lots']
+        const delay = 6000
+        await sleep(12000)
+
+        while (true) {
+            // Send message to flaps
+            for (let i = 0; i <= 12; i++) {
+                console.log(`Sending message "${message[i]}" to flaps`)
+                splitflapConfig = applySetFlaps(splitflapConfig, stringToFlapIndexArray(message[i]))
+                splitflap.sendConfig(splitflapConfig)
+
+                await sleep(delay)
+            }
+        }
+
+    }
+
+    //runAnimation()
+    runMessageForKendal()
 }
 
 
